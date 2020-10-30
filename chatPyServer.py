@@ -140,7 +140,7 @@ class Server():
             data['type'] = 'checkToken'
             data['payload'] = {}
             if dataFromConn['type'] == 'checkToken':
-                if dataFromConn['payload']['token'] == conexion.getToken():
+                if dataFromConn['payload']['token'] == self.doMd5(conexion.getToken()):
                     data['payload']['correctToken'] = 'True'
                     conexion.send(f'{data}')
                     data = {
@@ -204,12 +204,14 @@ class Server():
             rawDataFromConn = conexion.recv()
             if rawDataFromConn:
                 dataFromConn = loads(rawDataFromConn)
-                if dataFromConn['type'] == 'msg' and dataFromConn['payload']['token'] == conexion.getToken():
+                if dataFromConn['type'] == 'msg' and dataFromConn['payload']['token'] == self.doMd5(conexion.getToken()):
                     print('{} {} {} envio: {}'.format(self.STATUS,dataFromConn['payload']['time'],user,dataFromConn['payload']['msg']))
+                    dataFromConn['payload']['token'] = conexion.getToken()
                     self.sendDataToConns(dataFromConn)
-                elif dataFromConn['type'] == 'changeSettings' and dataFromConn['payload']['token'] == conexion.getToken():
+                elif dataFromConn['type'] == 'changeSettings' and dataFromConn['payload']['token'] == self.doMd5(conexion.getToken()):
                     print(f'{self.STATUS} {self.getTime()} {user} cambio sus ajustes.')
                     self.setColores(dataFromConn["payload"]["user"], dataFromConn["payload"]["color"])
+                    dataFromConn['payload']['token'] = conexion.getToken()
                     self.sendDataToConns(dataFromConn)
             else:
                 self.disconnectConn(self.conexiones.index(conexion))
@@ -395,7 +397,7 @@ class Server():
                     data = {
                         'type': 'msg',
                         'payload': {
-                            'token': conexion.getToken(),
+                            'token': self.doMd5(conexion.getToken()),
                             'user': dataFromConn['payload']['user'],
                             'msg': self.useMT(self.mt1, conexion.getToken(), msg),
                             'time': dataFromConn['payload']['time']
@@ -405,7 +407,7 @@ class Server():
                     data = {
                         'type': 'changeSettings',
                         'payload': {
-                            'token': conexion.getToken(),
+                            'token': self.doMd5(conexion.getToken()),
                             'colores': self.getColores()
                         }
                     }
@@ -464,6 +466,8 @@ class Server():
                 self.datos[user]['color'] = color
                 dump(self.datos, open('datos.json','w'), indent=4)
                 break
+    def doMd5(self, text):
+        return md5(text.encode('utf8')).hexdigest()
 
 
 class Conexion():

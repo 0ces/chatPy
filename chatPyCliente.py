@@ -75,7 +75,7 @@ class ChatGui():
             data = {
                 'type': 'changeSettings',
                 'payload': {
-                    'token': self.main.getToken(),
+                    'token': self.main.doMd5(self.main.getToken()),
                     'user': self.main.getUser(),
                     'color': color_two[1]
                 }
@@ -316,14 +316,14 @@ class Client():
             if not rawDataFromServer:
                 exit()
             dataFromServer = loads(rawDataFromServer)
-            if dataFromServer['type'] == 'msg' and dataFromServer['payload']['token'] == self.getToken():
+            if dataFromServer['type'] == 'msg' and dataFromServer['payload']['token'] == self.doMd5(self.getToken()):
                 data = {
                     'time': dataFromServer['payload']['time'],
                     'user': dataFromServer['payload']['user'],
                     'msg': self.useMT(self.mt2, dataFromServer['payload']['msg'])
                 }
                 self.chat.print(data)
-            elif dataFromServer['type'] == 'changeSettings' and dataFromServer['payload']['token'] == self.getToken():
+            elif dataFromServer['type'] == 'changeSettings' and dataFromServer['payload']['token'] == self.doMd5(self.getToken()):
                 print('Alguien a cambiado sus ajustes')
                 self.setColores(dataFromServer['payload']['colores'])
             else:
@@ -350,7 +350,7 @@ class Client():
             data = {}
             data['type'] = 'checkToken'
             data['payload'] = {}
-            data['payload']['token'] = self.getToken()
+            data['payload']['token'] = self.doMd5(self.getToken())
             self.send(f'{data}')
             checkToken = self.recv()
             dataFromServer = loads(checkToken)
@@ -374,7 +374,7 @@ class Client():
         data = {
             'type': 'msg',
             'payload': {
-                'token': self.getToken(),
+                'token': self.doMd5(self.getToken()),
                 'time': self.getTime(),
                 'msg': msg,
                 'user': self.user
@@ -436,6 +436,9 @@ class Client():
             'u', 'v', 'w', 'x', 'y', 'z', '1', '2', '3', '4', '5',
             '6', '7', '8', '9', '0', '.', '-', ',', ' '
             }
+
+    def doMd5(self, text):
+        return md5(text.encode('utf8')).hexdigest()
 
 def HEXToRGB(value):
     value = value.lstrip('#')
